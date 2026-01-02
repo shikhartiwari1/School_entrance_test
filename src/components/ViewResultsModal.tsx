@@ -75,184 +75,154 @@ export default function ViewResultsModal({ testId, onClose }: ViewResultsModalPr
   const malpracticeCount = submissions.filter((s) => s.malpractice_detected).length;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg shadow-xl max-w-7xl w-full max-h-[90vh] flex flex-col">
-        <div className="p-6 border-b border-gray-200 flex items-center justify-between">
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-2 md:p-4">
+      <div className="bg-white rounded-2xl w-full max-w-7xl max-h-[96vh] flex flex-col shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
+        <div className="px-4 md:px-8 py-4 md:py-6 border-b border-gray-100 flex items-center justify-between sticky top-0 bg-white z-20">
           <div>
-            <h2 className="text-2xl font-bold text-gray-900">Test Results</h2>
-            {test && <p className="text-gray-600 mt-1">{test.title}</p>}
+            <h2 className="text-xl md:text-2xl font-bold text-gray-900">Test Results</h2>
+            {test && <p className="text-[10px] md:text-sm text-gray-500 mt-1 uppercase tracking-wider font-semibold">{test.title}</p>}
           </div>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 md:gap-4">
             <button
               onClick={handleExport}
-              className="bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded-lg transition flex items-center gap-2"
+              className="hidden sm:flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-xl transition shadow-lg shadow-green-500/20 active:scale-95 text-xs md:text-sm"
             >
               <Download className="w-4 h-4" />
-              Export to Excel
+              Export Excel
             </button>
-            <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
-              <X className="w-6 h-6" />
+            <button
+              onClick={onClose}
+              className="p-2 text-gray-400 hover:text-gray-900 hover:bg-gray-100 rounded-full transition-all"
+            >
+              <X className="w-5 h-5 md:w-6 md:h-6" />
             </button>
           </div>
         </div>
 
-        <div className="p-6 overflow-auto flex-1">
+        <div className="flex-1 overflow-y-auto p-4 md:p-8 custom-scrollbar">
           {loading ? (
-            <div className="text-center py-8 text-gray-600">Loading results...</div>
-          ) : submissions.length === 0 ? (
-            <div className="text-center py-8 text-gray-600">No submissions yet for this test.</div>
+            <div className="flex items-center justify-center h-64">
+              <div className="animate-spin rounded-full h-12 w-12 border-4 border-blue-600 border-t-transparent"></div>
+            </div>
           ) : (
-            <>
-              <div className="grid grid-cols-5 gap-4 mb-6">
-                <div className="bg-blue-50 rounded-lg p-4">
-                  <p className="text-sm text-gray-600 mb-1">Total Submissions</p>
-                  <p className="text-2xl font-bold text-blue-600">{submissions.length}</p>
+            <div className="max-w-7xl mx-auto space-y-6 md:space-y-10">
+              {/* Stats Grid */}
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-6 animate-in slide-in-from-bottom-4 duration-300">
+                <div className="bg-blue-50/50 p-4 md:p-6 rounded-2xl border border-blue-100/50">
+                  <p className="text-[10px] md:text-xs font-bold text-blue-600 uppercase tracking-widest mb-1 md:mb-2 text-center md:text-left">Total Submissions</p>
+                  <p className="text-xl md:text-3xl font-bold text-gray-900 text-center md:text-left">{submissions.length}</p>
                 </div>
-                <div className="bg-green-50 rounded-lg p-4">
-                  <p className="text-sm text-gray-600 mb-1">Average Score</p>
-                  <p className="text-2xl font-bold text-green-600">
-                    {(
-                      submissions.reduce((sum, s) => sum + s.percentage, 0) / submissions.length
-                    ).toFixed(1)}
-                    %
+                <div className="bg-green-50/50 p-4 md:p-6 rounded-2xl border border-green-100/50">
+                  <p className="text-[10px] md:text-xs font-bold text-green-600 uppercase tracking-widest mb-1 md:mb-2 text-center md:text-left">Average Score</p>
+                  <p className="text-xl md:text-3xl font-bold text-gray-900 text-center md:text-left">
+                    {submissions.length > 0
+                      ? Math.round(submissions.reduce((acc, s) => acc + (s.percentage || 0), 0) / submissions.length)
+                      : 0}%
                   </p>
                 </div>
-                <div className="bg-purple-50 rounded-lg p-4">
-                  <p className="text-sm text-gray-600 mb-1">Passed</p>
-                  <p className="text-2xl font-bold text-purple-600">
-                    {submissions.filter((s) => s.percentage >= (test?.passing_percentage || 40)).length}
-                  </p>
+                <div className="bg-red-50/50 p-4 md:p-6 rounded-2xl border border-red-100/50">
+                  <p className="text-[10px] md:text-xs font-bold text-red-600 uppercase tracking-widest mb-1 md:mb-2 text-center md:text-left">Malpractice Detected</p>
+                  <p className="text-xl md:text-3xl font-bold text-gray-900 text-center md:text-left">{malpracticeCount}</p>
                 </div>
-                <div className="bg-red-50 rounded-lg p-4">
-                  <p className="text-sm text-gray-600 mb-1">Failed</p>
-                  <p className="text-2xl font-bold text-red-600">
-                    {submissions.filter((s) => s.percentage < (test?.passing_percentage || 40)).length}
-                  </p>
-                </div>
-                <div className="bg-orange-50 rounded-lg p-4">
-                  <p className="text-sm text-gray-600 mb-1">Malpractice Detected</p>
-                  <p className="text-2xl font-bold text-orange-600">{malpracticeCount}</p>
+                <div className="bg-purple-50/50 p-4 md:p-6 rounded-2xl border border-purple-100/50 text-center md:text-left">
+                  <p className="text-[10px] md:text-xs font-bold text-purple-600 uppercase tracking-widest mb-1 md:mb-2">Admin Actions</p>
+                  <button onClick={handleExport} className="text-xs md:text-sm font-bold text-purple-700 hover:underline">
+                    Download Report
+                  </button>
                 </div>
               </div>
 
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead className="bg-gray-50 border-b border-gray-200 sticky top-0">
-                    <tr>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase">
-                        Student Code
-                      </th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase">
-                        Student Name
-                      </th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase">
-                        Father's Name
-                      </th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase">
-                        Class
-                      </th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase">
-                        Slot
-                      </th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase">
-                        Score
-                      </th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase">
-                        Percentage
-                      </th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase">
-                        Malpractice
-                      </th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase">
-                        Tab Switches
-                      </th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase">
-                        Time Taken
-                      </th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase">
-                        Submitted At
-                      </th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase">
-                        Status
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
-                    {submissions.map((submission) => (
-                      <tr key={submission.id} className="hover:bg-gray-50">
-                        <td className="px-4 py-3 font-mono font-bold text-blue-600">
-                          {submission.student_code || 'N/A'}
-                        </td>
-                        <td className="px-4 py-3 font-medium text-gray-900">
-                          {submission.student_name}
-                          {submission.retest_key_used && (
-                            <span className="ml-2 px-2 py-0.5 bg-blue-100 text-blue-700 text-xs rounded-full font-semibold">
-                              (Retest)
-                            </span>
-                          )}
-                        </td>
-                        <td className="px-4 py-3 text-gray-700">
-                          {submission.father_name || 'N/A'}
-                        </td>
-                        <td className="px-4 py-3 text-gray-700">
-                          {submission.class_applying_for}
-                        </td>
-                        <td className="px-4 py-3 text-center font-medium text-gray-900">
-                          {submission.slot_number || 'N/A'}
-                        </td>
-                        <td className="px-4 py-3 font-medium text-gray-900">
-                          {submission.score}/{submission.total_marks}
-                        </td>
-                        <td className="px-4 py-3">
-                          <span
-                            className={`font-semibold ${submission.percentage >= (test?.passing_percentage || 40)
-                              ? 'text-green-600'
-                              : 'text-red-600'
-                              }`}
-                          >
-                            {submission.percentage.toFixed(2)}%
-                          </span>
-                        </td>
-                        <td className="px-4 py-3">
-                          {submission.malpractice_detected ? (
-                            <span className="flex items-center gap-1 px-2 py-1 bg-red-100 text-red-700 rounded font-semibold w-fit">
-                              <AlertCircle className="w-4 h-4" />
-                              Yes
-                            </span>
-                          ) : (
-                            <span className="text-gray-500">No</span>
-                          )}
-                        </td>
-                        <td className="px-4 py-3">
-                          <span
-                            className={`font-medium ${submission.tab_switch_count === 0
-                              ? 'text-green-600'
-                              : submission.tab_switch_count === 1
-                                ? 'text-yellow-600'
-                                : 'text-red-600'
-                              }`}
-                          >
-                            {submission.tab_switch_count}
-                          </span>
-                        </td>
-                        <td className="px-4 py-3 text-sm text-gray-700 font-mono">
-                          {formatTime(submission.time_taken_seconds || 0)}
-                        </td>
-                        <td className="px-4 py-3 text-sm text-gray-600">
-                          {submission.submitted_at
-                            ? new Date(submission.submitted_at).toLocaleString()
-                            : '-'}
-                        </td>
-                        <td className="px-4 py-3">{getStatusBadge(submission.status)}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+              {/* Submissions Table */}
+              <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm animate-in slide-in-from-bottom-4 duration-400 delay-75">
+                <div className="p-4 md:p-6 border-b border-gray-100 bg-gray-50/50 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <h3 className="text-sm md:text-lg font-bold text-gray-900">Detailed Submissions</h3>
+                  <button
+                    onClick={handleExport}
+                    className="sm:hidden flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-xl transition text-xs"
+                  >
+                    <Download className="w-4 h-4" />
+                    Export Excel
+                  </button>
+                </div>
+                <div className="overflow-x-auto custom-scrollbar">
+                  {submissions.length === 0 ? (
+                    <div className="p-8 md:p-12 text-center">
+                      <AlertCircle className="w-10 h-10 md:w-16 md:h-16 text-gray-300 mx-auto mb-4" />
+                      <p className="text-sm md:text-lg text-gray-500 font-medium">No results found for this test yet.</p>
+                    </div>
+                  ) : (
+                    <table className="w-full text-left whitespace-nowrap">
+                      <thead>
+                        <tr className="bg-white border-b border-gray-100">
+                          <th className="px-4 md:px-6 py-3 md:py-4 text-[10px] md:text-xs font-bold text-gray-500 uppercase tracking-widest">Student Info</th>
+                          <th className="px-4 md:px-6 py-3 md:py-4 text-[10px] md:text-xs font-bold text-gray-500 uppercase tracking-widest">Date/Time</th>
+                          <th className="px-4 md:px-6 py-3 md:py-4 text-[10px] md:text-xs font-bold text-gray-500 uppercase tracking-widest">Score</th>
+                          <th className="px-4 md:px-6 py-3 md:py-4 text-[10px] md:text-xs font-bold text-gray-500 uppercase tracking-widest">Details</th>
+                          <th className="px-4 md:px-6 py-3 md:py-4 text-[10px] md:text-xs font-bold text-gray-500 uppercase tracking-widest">Security</th>
+                          <th className="px-4 md:px-6 py-3 md:py-4 text-[10px] md:text-xs font-bold text-gray-500 uppercase tracking-widest">Status</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-50">
+                        {submissions.map((s) => (
+                          <tr key={s.id} className="hover:bg-gray-50 transition-colors">
+                            <td className="px-4 md:px-6 py-4">
+                              <div className="flex flex-col">
+                                <span className="text-sm md:text-base font-bold text-gray-900 flex items-center gap-2">
+                                  {s.student_name}
+                                  {s.retest_key_used && (
+                                    <span className="px-1.5 py-0.5 bg-blue-100 text-blue-700 text-[8px] md:text-[10px] rounded-full font-bold uppercase tracking-tighter">Retest</span>
+                                  )}
+                                </span>
+                                <span className="text-[10px] md:text-xs text-gray-500 font-mono tracking-wider">{s.student_code}</span>
+                                <span className="text-[9px] text-gray-400">Class: {s.class_applying_for} | Slot: {s.slot_number || 'N/A'}</span>
+                              </div>
+                            </td>
+                            <td className="px-4 md:px-6 py-4">
+                              <div className="flex flex-col">
+                                <span className="text-sm text-gray-700 font-medium">{s.submitted_at ? new Date(s.submitted_at).toLocaleDateString() : 'N/A'}</span>
+                                <span className="text-[10px] text-gray-500 font-mono">{s.submitted_at ? new Date(s.submitted_at).toLocaleTimeString() : '-'}</span>
+                              </div>
+                            </td>
+                            <td className="px-4 md:px-6 py-4">
+                              <div className="flex flex-col">
+                                <span className={`text-base md:text-lg font-bold ${(s.percentage || 0) >= (test?.passing_percentage || 40) ? 'text-green-600' : 'text-red-600'}`}>
+                                  {(s.percentage || 0).toFixed(1)}%
+                                </span>
+                                <span className="text-[10px] text-gray-400 font-medium uppercase tracking-tighter">{s.score}/{s.total_marks} Marks</span>
+                              </div>
+                            </td>
+                            <td className="px-4 md:px-6 py-4">
+                              <div className="flex flex-col gap-1">
+                                <span className="text-xs text-gray-600 font-bold uppercase tracking-tighter">Time: {formatTime(s.time_taken_seconds || 0)}</span>
+                                {s.father_name && <span className="text-[9px] text-gray-500 italic">Father: {s.father_name}</span>}
+                              </div>
+                            </td>
+                            <td className="px-4 md:px-6 py-4">
+                              <div className="flex flex-col gap-1">
+                                <span className={`inline-flex px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-widest w-fit border ${s.malpractice_detected ? 'bg-red-50 text-red-700 border-red-100' : 'bg-green-50 text-green-700 border-green-100'}`}>
+                                  {s.malpractice_detected ? 'Malpractice' : 'Secure'}
+                                </span>
+                                {s.tab_switch_count !== undefined && (
+                                  <span className={`text-[9px] font-bold ${s.tab_switch_count > 0 ? 'text-orange-600' : 'text-gray-400'}`}>
+                                    {s.tab_switch_count} Tab Switches
+                                  </span>
+                                )}
+                              </div>
+                            </td>
+                            <td className="px-4 md:px-6 py-4">
+                              {getStatusBadge(s.status || '')}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  )}
+                </div>
               </div>
-            </>
+            </div>
           )}
         </div>
       </div>
-    </div>
+    </div >
   );
 }

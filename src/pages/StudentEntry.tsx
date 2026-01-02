@@ -189,12 +189,11 @@ export default function StudentEntry({ onStartTest }: StudentEntryProps) {
               <p className="text-gray-600">No tests are currently available.</p>
             </div>
           ) : (
-            <div className="bg-white rounded-lg shadow-lg p-8 relative">
-
+            <div className="bg-white rounded-lg shadow-lg p-6 md:p-8 relative">
               {/* Retest status indicator */}
               {retestKeyValidated && (
                 <div className="mb-6 bg-blue-50 border border-blue-200 rounded-lg p-3 flex items-center justify-between">
-                  <div className="flex items-center gap-2 text-blue-800 font-medium">
+                  <div className="flex items-center gap-2 text-blue-800 font-medium text-sm md:text-base">
                     <CheckCircle className="w-5 h-5" />
                     <span>Retest Key Applied {isMasterKey ? '(Teacher Override)' : ''}</span>
                   </div>
@@ -204,7 +203,6 @@ export default function StudentEntry({ onStartTest }: StudentEntryProps) {
                       setActiveRetestKeyId(undefined);
                       setIsMasterKey(false);
                       setRetestKeyInput('');
-                      setStudentName(''); // Clear pre-filled name logic if desired, or keep it
                     }}
                     className="text-xs text-blue-600 hover:text-blue-800 underline"
                   >
@@ -213,18 +211,18 @@ export default function StudentEntry({ onStartTest }: StudentEntryProps) {
                 </div>
               )}
 
-              <h2 className="text-2xl font-semibold text-gray-800 mb-6">Student Information</h2>
+              <h2 className="text-xl md:text-2xl font-semibold text-gray-800 mb-4 md:mb-6">Student Information</h2>
 
               {error && (
-                <div className="mb-6 bg-red-50 border border-red-200 rounded-lg p-4 flex items-start gap-3">
+                <div className="mb-4 md:mb-6 bg-red-50 border border-red-200 rounded-lg p-3 md:p-4 flex items-start gap-3">
                   <AlertCircle className="w-5 h-5 text-red-600 mt-0.5 flex-shrink-0" />
-                  <p className="text-red-800">{error}</p>
+                  <p className="text-red-800 text-sm md:text-base">{error}</p>
                 </div>
               )}
 
-              <form onSubmit={handleSubmit} className="space-y-6">
+              <form onSubmit={handleSubmit} className="space-y-4 md:space-y-6">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-1 md:mb-2">
                     Select Test <span className="text-red-500">*</span>
                   </label>
                   <select
@@ -233,7 +231,7 @@ export default function StudentEntry({ onStartTest }: StudentEntryProps) {
                       const test = tests.find((t) => t.id === e.target.value);
                       setSelectedTest(test || null);
                     }}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
+                    className="w-full px-3 py-2.5 md:px-4 md:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition text-sm md:text-base"
                     required
                   >
                     <option value="">-- Select a test --</option>
@@ -244,56 +242,56 @@ export default function StudentEntry({ onStartTest }: StudentEntryProps) {
                     ))}
                   </select>
                   {selectedTest && (
-                    <div className="mt-3 p-4 bg-blue-50 rounded-lg">
-                      <p className="text-sm text-gray-700">
+                    <div className="mt-3 p-3 md:p-4 bg-blue-50 rounded-lg">
+                      <p className="text-xs md:text-sm text-gray-700">
                         <span className="font-medium">Duration:</span> {selectedTest.duration_minutes} minutes
                       </p>
-                      <p className="text-sm text-gray-700">
+                      <p className="text-xs md:text-sm text-gray-700">
                         <span className="font-medium">Total Marks:</span> {selectedTest.total_marks}
                       </p>
                       {selectedTest.description && (
-                        <p className="text-sm text-gray-700 mt-2">{selectedTest.description}</p>
+                        <p className="text-xs md:text-sm text-gray-700 mt-2">{selectedTest.description}</p>
                       )}
                     </div>
                   )}
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-1 md:mb-2">
                     Student Full Name <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="text"
                     value={studentName}
                     onChange={(e) => setStudentName(e.target.value)}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
+                    className="w-full px-3 py-2.5 md:px-4 md:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition text-sm md:text-base"
                     placeholder="Enter your full name"
                     required
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-1 md:mb-2">
                     Father's Name <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="text"
                     value={fatherName}
                     onChange={(e) => setFatherName(e.target.value)}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
+                    className="w-full px-3 py-2.5 md:px-4 md:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition text-sm md:text-base"
                     placeholder="Enter your father's name"
                     required
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-1 md:mb-2">
                     Class Applying For <span className="text-red-500">*</span>
                   </label>
                   <select
                     value={classApplyingFor}
                     onChange={(e) => setClassApplyingFor(e.target.value)}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
+                    className="w-full px-3 py-2.5 md:px-4 md:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition text-sm md:text-base"
                     required
                   >
                     <option value="">-- Select class --</option>
@@ -306,19 +304,19 @@ export default function StudentEntry({ onStartTest }: StudentEntryProps) {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-1 md:mb-2">
                     Access Code <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="text"
                     value={accessCode}
                     onChange={(e) => setAccessCode(e.target.value.toUpperCase())}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition font-mono tracking-wider text-center text-lg"
-                    placeholder="Enter 6-character access code"
+                    className="w-full px-3 py-2.5 md:px-4 md:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition font-mono tracking-wider text-center text-base md:text-lg"
+                    placeholder="Enter 6-char code"
                     maxLength={6}
                     required
                   />
-                  <p className="text-xs text-gray-500 mt-2">
+                  <p className="text-[10px] md:text-xs text-gray-500 mt-2">
                     Contact your exam invigilator for the access code
                   </p>
                 </div>
@@ -326,26 +324,26 @@ export default function StudentEntry({ onStartTest }: StudentEntryProps) {
                 <button
                   type="button"
                   onClick={() => setShowRetestModal(true)}
-                  className="text-blue-600 text-sm font-medium hover:underline flex items-center gap-1"
+                  className="text-blue-600 text-xs md:text-sm font-medium hover:underline flex items-center gap-1"
                 >
                   <Key className="w-4 h-4" /> Have a Retest Key? Click here
                 </button>
 
-                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                  <h3 className="font-semibold text-yellow-900 mb-2">Important Instructions:</h3>
-                  <ul className="text-sm text-yellow-800 space-y-1 list-disc list-inside">
+                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 md:p-4">
+                  <h3 className="font-semibold text-yellow-900 mb-1 md:mb-2 text-sm md:text-base">Important Instructions:</h3>
+                  <ul className="text-[11px] md:text-sm text-yellow-800 space-y-1 list-disc list-inside">
                     <li>Full screen mode is required to start the test</li>
-                    <li>Do not switch tabs or minimize the window during the test</li>
-                    <li>Exiting fullscreen or switching tabs <strong>more than 2 times</strong> will auto-submit your test</li>
+                    <li>Do not switch tabs or minimize the window</li>
+                    <li>Exiting fullscreen <strong>more than 2 times</strong> will auto-submit</li>
                     <li>Right-click, copy, and paste are disabled</li>
-                    <li>Tab switching and fullscreen exits are recorded as malpractice</li>
+                    <li>All violations are recorded as malpractice</li>
                   </ul>
                 </div>
 
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg transition duration-200 shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 md:py-3 px-6 rounded-lg transition duration-200 shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed text-sm md:text-base"
                 >
                   {submitting ? 'Validating...' : 'Start Test'}
                 </button>
@@ -384,3 +382,5 @@ export default function StudentEntry({ onStartTest }: StudentEntryProps) {
     </div>
   );
 }
+
+

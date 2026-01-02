@@ -4,7 +4,19 @@ import { supabase } from '../lib/supabase';
 import type { Database } from '../lib/database.types';
 
 type Test = Database['public']['Tables']['tests']['Row'];
-type Question = Database['public']['Tables']['questions']['Insert'];
+
+interface Question {
+  id?: string;
+  test_id: string;
+  question_number: number;
+  question_type: string;
+  question_text: string;
+  options: string[];
+  correct_answers: string[];
+  marks: number;
+  is_case_sensitive: boolean;
+  explanation: string;
+}
 
 interface CreateTestModalProps {
   test: Test | null;
@@ -111,21 +123,6 @@ export default function CreateTestModal({ test, onClose, onSuccess }: CreateTest
     setQuestions(updated);
   };
 
-  const addOption = (questionIndex: number) => {
-    const updated = [...questions];
-    const options = [...(updated[questionIndex].options as string[])];
-    options.push(`Option ${options.length + 1}`);
-    updated[questionIndex].options = options;
-    setQuestions(updated);
-  };
-
-  const removeOption = (questionIndex: number, optionIndex: number) => {
-    const updated = [...questions];
-    const options = (updated[questionIndex].options as string[]).filter((_, i) => i !== optionIndex);
-    updated[questionIndex].options = options;
-    setQuestions(updated);
-  };
-
   const handleSave = async () => {
     if (!title.trim()) {
       alert('Please enter a test title');
@@ -221,281 +218,328 @@ export default function CreateTestModal({ test, onClose, onSuccess }: CreateTest
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 overflow-y-auto">
-      <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full my-8">
-        <div className="p-6 border-b border-gray-200 flex items-center justify-between">
-          <h2 className="text-2xl font-bold text-gray-900">
-            {test ? 'Edit Test' : 'Create New Test'}
-          </h2>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
-            <X className="w-6 h-6" />
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-2 md:p-4">
+      <div className="bg-white rounded-2xl w-full max-w-5xl max-h-[96vh] flex flex-col shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
+        <div className="px-4 md:px-8 py-4 md:py-6 border-b border-gray-100 flex items-center justify-between sticky top-0 bg-white z-20">
+          <div>
+            <h2 className="text-xl md:text-2xl font-bold text-gray-900">{test ? 'Edit Test' : 'Create New Test'}</h2>
+            <p className="text-[10px] md:text-sm text-gray-500 mt-1 uppercase tracking-wider font-semibold">Test Configuration</p>
+          </div>
+          <button
+            onClick={onClose}
+            className="p-2 text-gray-400 hover:text-gray-900 hover:bg-gray-100 rounded-full transition-all"
+          >
+            <X className="w-5 h-5 md:w-6 md:h-6" />
           </button>
         </div>
 
-        <div className="p-6 max-h-[70vh] overflow-y-auto">
-          <div className="space-y-6">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Test Title <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="text"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                placeholder="Enter test title"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Description
-              </label>
-              <textarea
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                placeholder="Enter test description"
-                rows={2}
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Duration (minutes)
-                </label>
-                <input
-                  type="number"
-                  value={durationMinutes}
-                  onChange={(e) => setDurationMinutes(parseInt(e.target.value) || 0)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  min="1"
-                />
+        <div className="flex-1 overflow-y-auto p-4 md:p-8 custom-scrollbar">
+          <div className="max-w-4xl mx-auto space-y-8 md:space-y-12">
+            {/* Basic Info */}
+            <section className="animate-in slide-in-from-bottom-4 duration-300">
+              <div className="flex items-center gap-2 mb-4 md:mb-6">
+                <div className="w-1.5 h-6 bg-blue-600 rounded-full"></div>
+                <h3 className="text-lg md:text-xl font-bold text-gray-900">General Information</h3>
               </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Passing Percentage
-                </label>
-                <input
-                  type="number"
-                  value={passingPercentage}
-                  onChange={(e) => setPassingPercentage(parseInt(e.target.value) || 0)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  min="0"
-                  max="100"
-                />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-8">
+                <div className="md:col-span-2">
+                  <label className="block text-xs md:text-sm font-bold text-gray-700 mb-1.5 md:mb-2 uppercase tracking-wide">
+                    Test Title <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                    className="w-full px-3 py-2.5 md:px-5 md:py-3.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all md:text-lg font-medium"
+                    placeholder="e.g., Mathematics Entrance 2024"
+                    required
+                  />
+                </div>
+                <div className="md:col-span-2">
+                  <label className="block text-xs md:text-sm font-bold text-gray-700 mb-1.5 md:mb-2 uppercase tracking-wide">
+                    Description
+                  </label>
+                  <textarea
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                    className="w-full px-3 py-2.5 md:px-5 md:py-3.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all min-h-[80px] md:min-h-[100px] text-sm md:text-base"
+                    placeholder="Enter test description and instructions..."
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs md:text-sm font-bold text-gray-700 mb-1.5 md:mb-2 uppercase tracking-wide">
+                    Duration (Minutes) <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="number"
+                    value={durationMinutes}
+                    onChange={(e) => setDurationMinutes(parseInt(e.target.value))}
+                    className="w-full px-3 py-2.5 md:px-5 md:py-3.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all text-sm md:text-base"
+                    min="1"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs md:text-sm font-bold text-gray-700 mb-1.5 md:mb-2 uppercase tracking-wide">
+                    Passing Percentage <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="number"
+                    value={passingPercentage}
+                    onChange={(e) => setPassingPercentage(parseInt(e.target.value))}
+                    className="w-full px-3 py-2.5 md:px-5 md:py-3.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all text-sm md:text-base"
+                    min="1"
+                    max="100"
+                    required
+                  />
+                </div>
               </div>
-            </div>
+            </section>
 
-            <div className="border-t border-gray-200 pt-6">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold text-gray-900">Questions</h3>
+            {/* Questions Section */}
+            <section className="animate-in slide-in-from-bottom-4 duration-400 delay-75">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 md:mb-8 bg-gray-50 p-4 md:p-6 rounded-2xl border border-gray-200">
+                <div className="flex items-center gap-3">
+                  <div className="w-1.5 h-6 bg-blue-600 rounded-full"></div>
+                  <div>
+                    <h3 className="text-lg md:text-xl font-bold text-gray-900">Questions</h3>
+                    <p className="text-xs md:text-sm text-gray-500">{questions.length} total questions configured</p>
+                  </div>
+                </div>
                 <button
+                  type="button"
                   onClick={addNewQuestion}
-                  className="bg-green-600 hover:bg-green-700 text-white text-sm font-medium py-2 px-4 rounded-lg transition flex items-center gap-2"
+                  className="flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 md:px-6 py-2.5 md:py-3 rounded-xl font-bold transition shadow-lg shadow-blue-500/20 active:scale-95 text-sm md:text-base"
                 >
-                  <Plus className="w-4 h-4" />
+                  <Plus className="w-4 h-4 md:w-5 md:h-5" />
                   Add Question
                 </button>
               </div>
 
-              <div className="space-y-6">
-                {questions.map((q, qIndex) => (
-                  <div key={qIndex} className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                    <div className="flex items-start justify-between mb-4">
-                      <h4 className="font-medium text-gray-900">Question {qIndex + 1}</h4>
-                      <button
-                        onClick={() => removeQuestion(qIndex)}
-                        className="text-red-600 hover:text-red-700"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
+              <div className="space-y-6 md:space-y-8">
+                {questions.map((question, index) => (
+                  <div key={index} className="bg-white border border-gray-200 rounded-2xl md:rounded-[2rem] p-4 md:p-10 relative shadow-sm hover:shadow-md transition-all group animate-in slide-in-from-bottom-4 duration-300">
+                    <div className="absolute -top-3 left-4 md:left-8 px-4 py-1.5 bg-gray-900 text-white text-[10px] md:text-xs font-bold rounded-full group-hover:bg-blue-600 transition-colors uppercase tracking-widest">
+                      Q {index + 1}
                     </div>
 
-                    <div className="space-y-4">
-                      <div className="grid grid-cols-2 gap-4">
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Question Type
-                          </label>
-                          <select
-                            value={q.question_type}
-                            onChange={(e) => updateQuestion(qIndex, 'question_type', e.target.value)}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                          >
-                            {questionTypes.map((type) => (
-                              <option key={type.value} value={type.value}>
-                                {type.label}
-                              </option>
-                            ))}
-                          </select>
-                        </div>
-
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Marks
-                          </label>
-                          <input
-                            type="number"
-                            value={q.marks}
-                            onChange={(e) =>
-                              updateQuestion(qIndex, 'marks', parseInt(e.target.value) || 1)
-                            }
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                            min="1"
+                    <div className="flex flex-col gap-6 md:gap-10">
+                      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 md:gap-10">
+                        <div className="lg:col-span-8">
+                          <label className="block text-xs md:text-sm font-bold text-gray-500 mb-2 uppercase tracking-wide">Question Text</label>
+                          <textarea
+                            value={question.question_text}
+                            onChange={(e) => updateQuestion(index, 'question_text', e.target.value)}
+                            className="w-full px-4 py-3 md:px-6 md:py-5 bg-gray-50 border border-gray-100 rounded-xl md:rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all text-sm md:text-lg min-h-[100px] md:min-h-[120px]"
+                            placeholder="Enter your question here..."
+                            required
                           />
+                        </div>
+                        <div className="lg:col-span-4 space-y-4 md:space-y-6">
+                          <div>
+                            <label className="block text-xs md:text-sm font-bold text-gray-500 mb-2 uppercase tracking-wide">Question Type</label>
+                            <select
+                              value={question.question_type}
+                              onChange={(e) => updateQuestion(index, 'question_type', e.target.value)}
+                              className="w-full px-4 py-3 md:px-6 md:py-4 bg-gray-50 border border-gray-100 rounded-xl md:rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all text-sm md:text-base font-semibold"
+                            >
+                              {questionTypes.map((type) => (
+                                <option key={type.value} value={type.value}>{type.label}</option>
+                              ))}
+                            </select>
+                          </div>
+                          <div>
+                            <label className="block text-xs md:text-sm font-bold text-gray-500 mb-2 uppercase tracking-wide">Marks</label>
+                            <input
+                              type="number"
+                              value={question.marks}
+                              onChange={(e) => updateQuestion(index, 'marks', parseInt(e.target.value))}
+                              className="w-full px-4 py-3 md:px-6 md:py-4 bg-gray-50 border border-gray-100 rounded-xl md:rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all text-sm md:text-base font-semibold"
+                              min="1"
+                              required
+                            />
+                          </div>
                         </div>
                       </div>
 
+                      {/* Explanation Field */}
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Question Text
-                        </label>
+                        <label className="block text-xs md:text-sm font-bold text-gray-500 mb-2 uppercase tracking-wide">Correct Answer Explanation</label>
                         <textarea
-                          value={q.question_text}
-                          onChange={(e) => updateQuestion(qIndex, 'question_text', e.target.value)}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                          rows={2}
-                          placeholder="Enter question text"
+                          value={question.explanation || ''}
+                          onChange={(e) => updateQuestion(index, 'explanation', e.target.value)}
+                          className="w-full px-4 py-3 md:px-6 md:py-4 bg-gray-50 border border-gray-100 rounded-xl md:rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all text-sm md:text-base min-h-[80px]"
+                          placeholder="Why is it the correct answer? (Optional)"
                         />
                       </div>
 
-                      {(q.question_type === 'mcq_single' ||
-                        q.question_type === 'mcq_multiple' ||
-                        q.question_type === 'true_false') && (
-                          <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                              Options
-                            </label>
-                            <div className="space-y-2">
-                              {(q.options as string[]).map((option, oIndex) => (
-                                <div key={oIndex} className="flex items-center gap-2">
-                                  <input
-                                    type="text"
-                                    value={option}
-                                    onChange={(e) => updateOptions(qIndex, oIndex, e.target.value)}
-                                    className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                                    placeholder={`Option ${oIndex + 1}`}
-                                  />
-                                  {q.question_type !== 'true_false' && (q.options as string[]).length > 2 && (
-                                    <button
-                                      onClick={() => removeOption(qIndex, oIndex)}
-                                      className="text-red-600 hover:text-red-700"
-                                    >
-                                      <Trash2 className="w-4 h-4" />
-                                    </button>
-                                  )}
-                                </div>
-                              ))}
-                              {q.question_type !== 'true_false' && (
-                                <button
-                                  onClick={() => addOption(qIndex)}
-                                  className="text-blue-600 hover:text-blue-700 text-sm font-medium"
-                                >
-                                  + Add Option
-                                </button>
-                              )}
-                            </div>
+                      {/* Options and Correct Answers Logic */}
+                      {(question.question_type === 'mcq_single' || question.question_type === 'mcq_multiple') && (
+                        <div className="bg-gray-50/50 p-4 md:p-8 rounded-2xl md:rounded-[2rem] border border-gray-100/50">
+                          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4 md:mb-6">
+                            <h4 className="text-sm md:text-base font-bold text-gray-900 uppercase tracking-wide">Options & Correct Answers</h4>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const updated = [...questions];
+                                updated[index].options = [...(updated[index].options || []), `Option ${updated[index].options.length + 1}`];
+                                setQuestions(updated);
+                              }}
+                              className="text-blue-600 text-xs md:text-sm font-bold hover:underline flex items-center gap-1.5"
+                            >
+                              <Plus className="w-4 h-4 font-bold" /> Add Option
+                            </button>
                           </div>
-                        )}
-
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Correct Answer(s)
-                        </label>
-                        {q.question_type === 'mcq_single' || q.question_type === 'true_false' ? (
-                          <select
-                            value={(q.correct_answers as string[])[0] || ''}
-                            onChange={(e) => updateQuestion(qIndex, 'correct_answers', [e.target.value])}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                          >
-                            {(q.options as string[]).map((option, oIndex) => (
-                              <option key={oIndex} value={option}>
-                                {option}
-                              </option>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
+                            {question.options.map((option, optIdx) => (
+                              <div key={optIdx} className="flex items-center gap-3 bg-white p-2.5 md:p-3 rounded-xl border border-gray-100 shadow-sm group-hover:border-blue-100 transition-colors">
+                                <input
+                                  type={question.question_type === 'mcq_single' ? 'radio' : 'checkbox'}
+                                  checked={question.correct_answers.includes(option)}
+                                  onChange={() => {
+                                    const updated = [...questions];
+                                    if (question.question_type === 'mcq_single') {
+                                      updated[index].correct_answers = [option];
+                                    } else {
+                                      const current = question.correct_answers;
+                                      if (current.includes(option)) {
+                                        updated[index].correct_answers = current.filter(a => a !== option);
+                                      } else {
+                                        updated[index].correct_answers = [...current, option];
+                                      }
+                                    }
+                                    setQuestions(updated);
+                                  }}
+                                  className="w-4 h-4 md:w-5 md:h-5 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                                />
+                                <input
+                                  type="text"
+                                  value={option}
+                                  onChange={(e) => {
+                                    const updated = [...questions];
+                                    const oldOption = updated[index].options[optIdx];
+                                    updated[index].options[optIdx] = e.target.value;
+                                    updated[index].correct_answers = updated[index].correct_answers.map(a => a === oldOption ? e.target.value : a);
+                                    setQuestions(updated);
+                                  }}
+                                  className="flex-1 bg-transparent border-none outline-none text-sm md:text-base font-medium"
+                                  placeholder={`Option ${optIdx + 1}`}
+                                />
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    const updated = [...questions];
+                                    const removed = updated[index].options[optIdx];
+                                    updated[index].options = updated[index].options.filter((_, i) => i !== optIdx);
+                                    updated[index].correct_answers = updated[index].correct_answers.filter(a => a !== removed);
+                                    setQuestions(updated);
+                                  }}
+                                  className="p-1.5 md:p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </button>
+                              </div>
                             ))}
-                          </select>
-                        ) : q.question_type === 'mcq_multiple' ? (
-                          <div className="space-y-2">
-                            {(q.options as string[]).map((option, oIndex) => (
-                              <label key={oIndex} className="flex items-center gap-2">
+                          </div>
+                        </div>
+                      )}
+
+                      {question.question_type === 'true_false' && (
+                        <div className="flex gap-4 md:gap-8 bg-gray-50/50 p-4 md:p-8 rounded-2xl md:rounded-[2rem] border border-gray-100/50">
+                          {['True', 'False'].map((val) => (
+                            <label key={val} className={`
+                              flex-1 flex items-center justify-center gap-2 p-3 md:p-5 rounded-xl md:rounded-2xl border-2 transition-all cursor-pointer font-bold
+                              ${question.correct_answers.includes(val)
+                                ? 'bg-blue-600 text-white border-blue-600 shadow-lg shadow-blue-500/30 scale-105'
+                                : 'bg-white text-gray-400 border-gray-100 hover:border-blue-200'}
+                            `}>
+                              <input
+                                type="radio"
+                                className="hidden"
+                                checked={question.correct_answers.includes(val)}
+                                onChange={() => {
+                                  const updated = [...questions];
+                                  updated[index].correct_answers = [val];
+                                  setQuestions(updated);
+                                }}
+                              />
+                              <span className="text-sm md:text-xl">{val}</span>
+                            </label>
+                          ))}
+                        </div>
+                      )}
+
+                      {(question.question_type === 'fill_blank' || question.question_type === 'numerical' || question.question_type === 'short_answer') && (
+                        <div className="space-y-4 md:space-y-6 bg-gray-50/50 p-4 md:p-8 rounded-2xl md:rounded-[2rem] border border-gray-100/50">
+                          <div>
+                            <label className="block text-xs md:text-sm font-bold text-gray-500 mb-2 uppercase tracking-wide">Correct Answer <span className="text-red-500">*</span></label>
+                            <input
+                              type={question.question_type === 'numerical' ? 'number' : 'text'}
+                              value={question.correct_answers[0]}
+                              onChange={(e) => {
+                                const updated = [...questions];
+                                updated[index].correct_answers = [e.target.value];
+                                setQuestions(updated);
+                              }}
+                              className="w-full px-4 py-3 md:px-6 md:py-4 bg-white border border-gray-100 rounded-xl md:rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all text-sm md:text-base font-semibold shadow-sm"
+                              placeholder="Enter correct answer..."
+                              required
+                            />
+                          </div>
+                          {question.question_type !== 'numerical' && (
+                            <label className="flex items-center gap-3 cursor-pointer group">
+                              <div className="relative flex items-center">
                                 <input
                                   type="checkbox"
-                                  checked={(q.correct_answers as string[]).includes(option)}
-                                  onChange={(e) => {
-                                    const currentAnswers = q.correct_answers as string[];
-                                    const newAnswers = e.target.checked
-                                      ? [...currentAnswers, option]
-                                      : currentAnswers.filter((a) => a !== option);
-                                    updateQuestion(qIndex, 'correct_answers', newAnswers);
-                                  }}
-                                  className="w-4 h-4 text-blue-600 rounded"
+                                  checked={question.is_case_sensitive}
+                                  onChange={(e) => updateQuestion(index, 'is_case_sensitive', e.target.checked)}
+                                  className="w-4 h-4 md:w-5 md:h-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500 cursor-pointer"
                                 />
-                                <span className="text-gray-700">{option}</span>
-                              </label>
-                            ))}
-                          </div>
-                        ) : (
-                          <input
-                            type="text"
-                            value={(q.correct_answers as string[])[0] || ''}
-                            onChange={(e) => updateQuestion(qIndex, 'correct_answers', [e.target.value])}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                            placeholder="Enter correct answer"
-                          />
-                        )}
-                      </div>
-
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Review/Explanation (optional)
-                        </label>
-                        <textarea
-                          value={q.explanation || ''}
-                          onChange={(e) => updateQuestion(qIndex, 'explanation', e.target.value)}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                          rows={2}
-                          placeholder="Provide an explanation for the correct answer"
-                        />
-                      </div>
-
-                      {q.question_type === 'fill_blank' && (
-                        <label className="flex items-center gap-2">
-                          <input
-                            type="checkbox"
-                            checked={q.is_case_sensitive}
-                            onChange={(e) =>
-                              updateQuestion(qIndex, 'is_case_sensitive', e.target.checked)
-                            }
-                            className="w-4 h-4 text-blue-600 rounded"
-                          />
-                          <span className="text-sm text-gray-700">Case sensitive</span>
-                        </label>
+                              </div>
+                              <span className="text-xs md:text-sm font-bold text-gray-600 group-hover:text-gray-900 transition-colors uppercase tracking-wide">Case Sensitive</span>
+                            </label>
+                          )}
+                        </div>
                       )}
                     </div>
+
+                    <button
+                      type="button"
+                      onClick={() => removeQuestion(index)}
+                      className="absolute top-4 right-4 md:top-8 md:right-8 p-1.5 md:p-2.5 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all"
+                      title="Remove Question"
+                    >
+                      <Trash2 className="w-5 h-5 md:w-6 md:h-6" />
+                    </button>
                   </div>
                 ))}
               </div>
-            </div>
+            </section>
           </div>
         </div>
 
-        <div className="p-6 border-t border-gray-200 flex items-center justify-end gap-4">
-          <button
-            onClick={onClose}
-            className="px-6 py-2 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition"
-          >
-            Cancel
-          </button>
-          <button
-            onClick={handleSave}
-            disabled={saving}
-            className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition disabled:opacity-50"
-          >
-            {saving ? 'Saving...' : 'Save Test'}
-          </button>
+        <div className="px-4 md:px-8 py-4 md:py-6 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-4 bg-white sticky bottom-0 z-20">
+          <p className="text-xs md:text-sm text-gray-500 order-2 sm:order-1">All changes are saved upon clicking "Create/Update Test"</p>
+          <div className="flex gap-3 w-full sm:w-auto order-1 sm:order-2">
+            <button
+              onClick={onClose}
+              className="flex-1 sm:flex-none px-6 md:px-8 py-2.5 md:py-3.5 text-gray-500 font-bold hover:text-gray-900 transition-all text-sm md:text-base"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleSave}
+              disabled={saving}
+              className="flex-1 sm:flex-none bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white px-8 md:px-12 py-2.5 md:py-3.5 rounded-xl md:rounded-2xl font-bold shadow-xl shadow-blue-500/20 active:scale-95 transition-all text-sm md:text-base"
+            >
+              {saving ? (
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                  Saving...
+                </div>
+              ) : test ? 'Update Test' : 'Create Test'}
+            </button>
+          </div>
         </div>
       </div>
     </div>

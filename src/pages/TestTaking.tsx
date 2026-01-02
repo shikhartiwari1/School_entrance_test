@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { AlertTriangle, Clock, CheckCircle } from 'lucide-react';
+import { AlertTriangle, Clock, CheckCircle, Menu, X } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { evaluateAnswer, calculateResults } from '../lib/evaluation';
 import {
@@ -368,6 +368,8 @@ export default function TestTaking({
     }
   };
 
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
@@ -392,22 +394,22 @@ export default function TestTaking({
   const progress = ((currentQuestionIndex + 1) / questions.length) * 100;
 
   return (
-    <div className="h-screen bg-gray-50 flex flex-col font-sans relative">
+    <div className="h-screen bg-gray-50 flex flex-col font-sans relative overflow-hidden">
       {/* Overlay when not fullscreen */}
       {!document.fullscreenElement && (
         <div className="fixed inset-0 z-[200] bg-black bg-opacity-95 flex flex-col items-center justify-center text-white p-8 text-center backdrop-blur-md">
-          <AlertTriangle className="w-24 h-24 text-red-500 mb-6 animate-pulse" />
-          <h2 className="text-4xl font-bold mb-4">Secure Mode Exited</h2>
-          <p className="text-xl mb-8 max-w-xl text-gray-300">
+          <AlertTriangle className="w-16 h-16 md:w-24 md:h-24 text-red-500 mb-6 animate-pulse" />
+          <h2 className="text-2xl md:text-4xl font-bold mb-4">Secure Mode Exited</h2>
+          <p className="text-base md:text-xl mb-8 max-w-xl text-gray-300">
             Test cannot proceed unless you are in Fullscreen Mode.
           </p>
           <button
             onClick={enterFullscreen}
-            className="bg-blue-600 hover:bg-blue-700 text-white font-bold text-xl py-4 px-10 rounded-full transition transform hover:scale-105 shadow-lg border border-blue-400"
+            className="bg-blue-600 hover:bg-blue-700 text-white font-bold text-lg md:text-xl py-3 px-8 md:py-4 md:px-10 rounded-full transition transform hover:scale-105 shadow-lg border border-blue-400"
           >
             Return to Test (Fullscreen)
           </button>
-          <p className="mt-8 text-sm text-gray-500 font-mono">
+          <p className="mt-8 text-xs text-gray-500 font-mono">
             If button fails, press <strong>F11</strong> on your keyboard.
           </p>
         </div>
@@ -415,43 +417,50 @@ export default function TestTaking({
 
       {/* Malpractice Warning Banner */}
       {showMalpracticeWarning && (
-        <div className="fixed top-0 left-0 right-0 bg-red-600 text-white p-3 z-[100] flex items-center justify-center gap-2 shadow-lg animate-pulse">
-          <AlertTriangle className="w-6 h-6" />
-          <span className="font-bold text-lg text-center">
-            ⚠ Warning: Violation Detected! (Total: {violationCount}/2).
-            {fullscreenExitCountRef.current > 0 && ` Fullscreen Exits: ${fullscreenExitCountRef.current}/2.`}
-            <br className="md:hidden" /> Continued violation will auto-submit test.
+        <div className="fixed top-0 left-0 right-0 bg-red-600 text-white p-2 md:p-3 z-[100] flex items-center justify-center gap-2 shadow-lg animate-pulse">
+          <AlertTriangle className="w-5 h-5 md:w-6 md:h-6" />
+          <span className="font-bold text-sm md:text-lg text-center">
+            ⚠ Violation: {violationCount}/2.
+            <span className="hidden md:inline"> {fullscreenExitCountRef.current > 0 && `Fullscr Exits: ${fullscreenExitCountRef.current}/2.`}</span>
+            <br className="md:hidden" /> Continued violation will auto-submit.
           </span>
         </div>
       )}
 
       {/* Header */}
       <header className="bg-white shadow-sm border-b border-gray-200 z-10 flex-shrink-0">
-        <div className="container mx-auto px-6 py-3">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-xl font-bold text-gray-900 leading-tight">{test.title}</h1>
-              <div className="flex items-center gap-3 text-sm text-gray-600 mt-1">
-                <span className="font-mono bg-gray-100 px-2 py-0.5 rounded">{studentCode}</span>
-                <span>|</span>
-                <span className="font-medium">{studentName}</span>
+        <div className="container mx-auto px-4 md:px-6 py-2 md:py-3">
+          <div className="flex items-center justify-between gap-2">
+            <div className="min-w-0">
+              <h1 className="text-base md:text-xl font-bold text-gray-900 leading-tight truncate">{test.title}</h1>
+              <div className="flex items-center gap-2 text-[10px] md:text-sm text-gray-600 mt-0.5">
+                <span className="font-mono bg-gray-100 px-1.5 py-0.5 rounded truncate max-w-[80px] md:max-w-none">{studentCode}</span>
+                <span className="hidden md:inline">|</span>
+                <span className="font-medium truncate">{studentName}</span>
               </div>
             </div>
 
-            <div className="flex items-center gap-8">
-              <div className="flex items-center gap-2 bg-blue-50 px-4 py-2 rounded-full border border-blue-100">
-                <Clock className="w-5 h-5 text-blue-600" />
-                <span className={`font-mono text-xl font-bold ${timeLeft < 300 ? 'text-red-600 animate-pulse' : 'text-gray-900'}`}>
+            <div className="flex items-center gap-2 md:gap-8 flex-shrink-0">
+              <div className="flex items-center gap-1.5 bg-blue-50 px-3 py-1.5 md:px-4 md:py-2 rounded-full border border-blue-100">
+                <Clock className="w-4 h-4 md:w-5 md:h-5 text-blue-600" />
+                <span className={`font-mono text-base md:text-xl font-bold ${timeLeft < 300 ? 'text-red-600 animate-pulse' : 'text-gray-900'}`}>
                   {formatTime(timeLeft)}
                 </span>
               </div>
 
-              <div className="flex items-center gap-2">
+              <div className="hidden sm:flex items-center gap-2">
                 <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full ${violationCount > 0 ? 'bg-red-100 text-red-700' : 'bg-gray-100 text-gray-600'}`}>
                   <AlertTriangle className={`w-4 h-4 ${violationCount > 0 ? 'text-red-600' : 'text-gray-400'}`} />
-                  <span className="text-sm font-semibold">Violations: {violationCount}</span>
+                  <span className="text-xs md:text-sm font-semibold">Violations: {violationCount}</span>
                 </div>
               </div>
+
+              <button
+                onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+                className="md:hidden p-2 text-gray-600 hover:bg-gray-100 rounded-lg"
+              >
+                {isSidebarOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+              </button>
             </div>
           </div>
         </div>
@@ -462,62 +471,81 @@ export default function TestTaking({
       </header>
 
       {/* Main Layout */}
-      <div className="flex-1 flex overflow-hidden">
-        {/* Sidebar */}
-        <aside className="w-80 bg-white border-r border-gray-200 flex flex-col shadow-inner z-0 overflow-hidden">
-          <div className="p-5 border-b border-gray-100 bg-gray-50">
-            <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Question Navigator</h3>
-            <p className="text-sm text-gray-700 font-medium">
-              {Object.keys(answers).length} of {questions.length} Attempted
-            </p>
+      <div className="flex-1 flex overflow-hidden relative">
+        {/* Sidebar - Responsive */}
+        <aside className={`
+          fixed inset-y-0 left-0 z-50 w-72 bg-white border-r border-gray-200 flex flex-col shadow-xl transition-transform duration-300 md:relative md:translate-x-0 md:shadow-none md:z-auto
+          ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
+        `}>
+          <div className="p-4 md:p-5 border-b border-gray-100 bg-gray-50 flex items-center justify-between">
+            <div>
+              <h3 className="text-[10px] md:text-xs font-bold text-gray-500 uppercase tracking-wider mb-0.5 md:mb-1">Question Navigator</h3>
+              <p className="text-xs md:text-sm text-gray-700 font-medium">
+                {Object.keys(answers).length} of {questions.length} Attempted
+              </p>
+            </div>
+            <button onClick={() => setIsSidebarOpen(false)} className="md:hidden p-1 text-gray-400 hover:text-gray-600">
+              <X className="w-5 h-5" />
+            </button>
           </div>
 
-          <div className="flex-1 overflow-y-auto p-5 custom-scrollbar">
-            <div className="grid grid-cols-5 gap-3">
+          <div className="flex-1 overflow-y-auto p-4 md:p-5 custom-scrollbar">
+            <div className="grid grid-cols-4 sm:grid-cols-5 gap-2 md:gap-3">
               {questions.map((_, idx) => (
                 <button
                   key={idx}
-                  onClick={() => setCurrentQuestionIndex(idx)}
-                  className={`h-10 w-full rounded-lg text-sm font-bold transition-all duration-200 flex items-center justify-center ${getQuestionStatusColor(idx)}`}
+                  onClick={() => {
+                    setCurrentQuestionIndex(idx);
+                    if (window.innerWidth < 768) setIsSidebarOpen(false);
+                  }}
+                  className={`h-9 w-full md:h-10 rounded-lg text-xs md:text-sm font-bold transition-all duration-200 flex items-center justify-center relative ${getQuestionStatusColor(idx)}`}
                 >
                   {idx + 1}
                   {answers[questions[idx].id] !== undefined && idx !== currentQuestionIndex && (
-                    <CheckCircle className="w-3 h-3 ml-0.5 opacity-50 absolute top-1 right-1" />
+                    <CheckCircle className="w-3 h-3 absolute -top-1 -right-1 text-green-600 bg-white rounded-full" />
                   )}
                 </button>
               ))}
             </div>
           </div>
 
-          <div className="p-4 border-t border-gray-200 bg-gray-50 text-xs text-gray-500 space-y-2">
-            <div className="flex items-center gap-2">
-              <span className="w-3 h-3 rounded-full bg-green-500"></span>
+          <div className="p-3 md:p-4 border-t border-gray-200 bg-gray-50 text-[10px] md:text-xs text-gray-500 grid grid-cols-3 gap-1">
+            <div className="flex items-center gap-1.5">
+              <span className="w-2.5 h-2.5 rounded-full bg-green-500"></span>
               <span>Attempted</span>
             </div>
-            <div className="flex items-center gap-2">
-              <span className="w-3 h-3 rounded-full bg-red-400 opacity-60"></span>
+            <div className="flex items-center gap-1.5 text-center justify-center">
+              <span className="w-2.5 h-2.5 rounded-full bg-red-400 opacity-60"></span>
               <span>Unattempted</span>
             </div>
-            <div className="flex items-center gap-2">
-              <span className="w-3 h-3 rounded-full bg-blue-600"></span>
+            <div className="flex items-center gap-1.5 justify-end">
+              <span className="w-2.5 h-2.5 rounded-full bg-blue-600"></span>
               <span>Current</span>
             </div>
           </div>
         </aside>
 
+        {/* Backdrop for mobile sidebar */}
+        {isSidebarOpen && (
+          <div
+            className="fixed inset-0 bg-black/50 z-40 md:hidden"
+            onClick={() => setIsSidebarOpen(false)}
+          ></div>
+        )}
+
         {/* Question Area */}
         <main className="flex-1 flex flex-col bg-slate-50 relative overflow-hidden">
-          <div className="flex-1 overflow-y-auto p-4 md:p-6 custom-scrollbar flex flex-col justify-center">
-            <div className="max-w-5xl mx-auto w-full flex flex-col gap-4">
-              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 flex flex-col justify-between min-h-[300px]">
+          <div className="flex-1 overflow-y-auto p-3 md:p-6 custom-scrollbar flex flex-col">
+            <div className="max-w-4xl mx-auto w-full flex-1 flex flex-col justify-center">
+              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 md:p-6 flex flex-col min-h-[350px] md:min-h-[400px]">
                 <div className="mb-4 flex items-center justify-between border-b border-gray-100 pb-3">
-                  <span className="text-sm font-medium text-gray-500">Question {currentQuestionIndex + 1}</span>
-                  <span className="px-3 py-1 bg-blue-50 text-blue-700 text-xs font-bold uppercase rounded-full tracking-wide">
+                  <span className="text-xs md:text-sm font-medium text-gray-500">Question {currentQuestionIndex + 1}</span>
+                  <span className="px-2.5 py-1 bg-blue-50 text-blue-700 text-[10px] md:text-xs font-bold uppercase rounded-full tracking-wide">
                     {currentQuestion.marks} Marks
                   </span>
                 </div>
 
-                <div className="flex-1">
+                <div className="flex-1 overflow-y-auto py-2">
                   <QuestionRenderer
                     question={currentQuestion}
                     displayNumber={currentQuestionIndex + 1}
@@ -527,11 +555,11 @@ export default function TestTaking({
                 </div>
               </div>
 
-              <div className="flex items-center justify-between pt-2">
+              <div className="flex items-center justify-between pt-4 pb-2">
                 <button
                   onClick={() => setCurrentQuestionIndex((prev) => Math.max(0, prev - 1))}
                   disabled={currentQuestionIndex === 0}
-                  className="px-6 py-2 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 font-medium rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition shadow-sm"
+                  className="px-4 py-2 md:px-6 md:py-2 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 text-sm md:text-base font-medium rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition shadow-sm"
                 >
                   Previous
                 </button>
@@ -540,15 +568,15 @@ export default function TestTaking({
                   <button
                     onClick={() => handleSubmit(false)}
                     disabled={isSubmitting}
-                    className="px-8 py-2 bg-green-600 hover:bg-green-700 text-white font-medium rounded-lg disabled:opacity-50 transition shadow-md flex items-center gap-2"
+                    className="px-6 py-2 md:px-8 md:py-2 bg-green-600 hover:bg-green-700 text-white text-sm md:text-base font-medium rounded-lg disabled:opacity-50 transition shadow-md flex items-center gap-2"
                   >
-                    <CheckCircle className="w-5 h-5" />
+                    <CheckCircle className="w-4 h-4 md:w-5 md:h-5" />
                     Submit Test
                   </button>
                 ) : (
                   <button
                     onClick={() => setCurrentQuestionIndex((prev) => Math.min(questions.length - 1, prev + 1))}
-                    className="px-8 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition shadow-md flex items-center gap-2"
+                    className="px-6 py-2 md:px-8 md:py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm md:text-base font-medium rounded-lg transition shadow-md flex items-center gap-2"
                   >
                     Next Question
                   </button>
@@ -557,8 +585,8 @@ export default function TestTaking({
             </div>
           </div>
 
-          <footer className="bg-white border-t border-gray-200 py-3 px-6 text-center text-xs text-gray-400 flex-shrink-0">
-            <p>&copy; {new Date().getFullYear()} Azneeta Academy. All Rights Reserved. • Entrance Examination System</p>
+          <footer className="bg-white border-t border-gray-200 py-2.5 md:py-3 px-4 md:px-6 text-center text-[10px] md:text-xs text-gray-400 flex-shrink-0">
+            <p className="truncate">&copy; {new Date().getFullYear()} Azneeta Academy • Entrance Examination System</p>
           </footer>
         </main>
       </div>
