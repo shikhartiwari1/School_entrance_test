@@ -190,29 +190,38 @@ export default function TestTaking({
   };
 
   const loadTestData = async () => {
+    console.log('🎯 TestTaking: Starting to load test data for testId:', testId);
     try {
+      console.log('📡 Fetching test from database...');
       const { data: testData, error: testError } = await supabase
         .from('tests')
         .select('*')
         .eq('id', testId)
         .single();
+
+      console.log('Test fetch result:', { testData, testError });
       if (testError) throw testError;
 
       setTest(testData as Test);
       setTimeLeft((testData as Test).duration_minutes * 60);
 
+      console.log('🎰 Getting slot information...');
       const slot = await getOrCreateSlot(testId);
       setSlotNumber(slot.slot_number);
 
       const serial = await getNextSerialForSlot(testId, slot.slot_number, classApplyingFor);
       const code = generateStudentCode(classApplyingFor, studentName, serial);
       setStudentCode(code);
+      console.log('✅ Student code generated:', code);
 
+      console.log('📝 Fetching questions...');
       const { data: questionsData, error: questionsError } = await supabase
         .from('questions')
         .select('*')
         .eq('test_id', testId)
         .order('question_number', { ascending: true });
+
+      console.log('Questions fetch result:', { count: questionsData?.length, error: questionsError });
       if (questionsError) throw questionsError;
 
       if (questionsData && questionsData.length > 0) {
@@ -241,11 +250,21 @@ export default function TestTaking({
         });
 
         setQuestions(questionsWithOptionsShuffled);
+        console.log('✅ Test loaded successfully with', questionsWithOptionsShuffled.length, 'questions');
       } else {
+        console.warn('⚠️ No questions found for this test');
         setQuestions([]);
       }
     } catch (error) {
-      console.error('Error loading test:', error);
+      console.error('💥 Error loading test:', error);
+      console.error('Error details:', {
+        message: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+        fullError: error
+      });
+
+      const errorMessage = error instanceof Error ? error.message : JSON.stringify(error);
+      alert('Failed to load test: ' + errorMessage + '\n\nCheck console for details.');
     }
   };
 

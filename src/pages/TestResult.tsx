@@ -322,6 +322,6 @@ export default function TestResult({ submissionId, onBackToHome }: TestResultPro
           </div>
         </div>
       </div>
-    </div>
+    </div >
   );
 }

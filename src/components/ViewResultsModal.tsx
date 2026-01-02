@@ -40,13 +40,13 @@ export default function ViewResultsModal({ testId, onClose }: ViewResultsModalPr
       if (submissionsError) throw submissionsError;
 
       const sortedSubmissions = (submissionsData || []).sort((a: any, b: any) => {
-        // 1. Sort by percentage (descending)
+        // 1. Sort by percentage (descending - higher is better)
         if (b.percentage !== a.percentage) {
           return (Number(b.percentage) || 0) - (Number(a.percentage) || 0);
         }
-        // 2. Tie-breaker: Sort by submitted_at (ascending - earlier is better)
-        const timeA = a.submitted_at ? new Date(a.submitted_at).getTime() : Infinity;
-        const timeB = b.submitted_at ? new Date(b.submitted_at).getTime() : Infinity;
+        // 2. Tie-breaker: Sort by time_taken_seconds (ascending - faster is better)
+        const timeA = a.time_taken_seconds || Infinity;
+        const timeB = b.time_taken_seconds || Infinity;
         return timeA - timeB;
       });
 

@@ -355,7 +355,7 @@ export default function StudentEntry({ onStartTest }: StudentEntryProps) {
                   <div className="hidden lg:block p-3 bg-orange-50 rounded-xl border border-orange-100">
                     <span className="text-[9px] font-black text-orange-600 uppercase tracking-widest block mb-0.5">Ranking Info</span>
                     <p className="text-[10px] text-orange-800 leading-tight font-bold italic">
-                      "Highest marks with quickest submission secures top rank."
+                      "Highest marks with fastest completion time secures top rank."
                     </p>
                   </div>
                 </div>
