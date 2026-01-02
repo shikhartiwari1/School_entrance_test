@@ -15,7 +15,6 @@ interface Question {
   correct_answers: string[];
   marks: number;
   is_case_sensitive: boolean;
-  explanation: string;
 }
 
 interface CreateTestModalProps {
@@ -55,6 +54,7 @@ export default function CreateTestModal({ test, onClose, onSuccess }: CreateTest
   }, [test]);
 
   const loadQuestions = async (testId: string) => {
+    console.log('Loading questions for test:', testId);
     try {
       const { data, error } = await supabase
         .from('questions')
@@ -62,14 +62,22 @@ export default function CreateTestModal({ test, onClose, onSuccess }: CreateTest
         .eq('test_id', testId)
         .order('question_number', { ascending: true });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error loading questions:', error);
+        throw error;
+      }
+
+      console.log(`Loaded ${data?.length || 0} questions for test ${testId}`);
+
       if (data && data.length > 0) {
         setQuestions(data as Question[]);
       } else {
+        console.log('No questions found, initializing with one blank question.');
         addNewQuestion();
       }
-    } catch (error) {
-      console.error('Error loading questions:', error);
+    } catch (error: any) {
+      console.error('Error in loadQuestions trace:', error);
+      alert('Failed to load questions. Please check your connection.');
     }
   };
 
@@ -83,7 +91,6 @@ export default function CreateTestModal({ test, onClose, onSuccess }: CreateTest
       correct_answers: ['Option 1'],
       marks: 1,
       is_case_sensitive: false,
-      explanation: '',
     };
     setQuestions([...questions, newQuestion]);
   };
@@ -115,13 +122,6 @@ export default function CreateTestModal({ test, onClose, onSuccess }: CreateTest
     setQuestions(updated);
   };
 
-  const updateOptions = (questionIndex: number, optionIndex: number, value: string) => {
-    const updated = [...questions];
-    const options = [...(updated[questionIndex].options as string[])];
-    options[optionIndex] = value;
-    updated[questionIndex].options = options;
-    setQuestions(updated);
-  };
 
   const handleSave = async () => {
     if (!title.trim()) {
@@ -142,13 +142,15 @@ export default function CreateTestModal({ test, onClose, onSuccess }: CreateTest
     }
 
     setSaving(true);
-
+    setSaving(true);
     try {
-      const totalMarks = questions.reduce((sum, q) => sum + (q.marks || 0), 0);
-
+      const totalMarks = questions.reduce((sum, q) => sum + (Number(q.marks) || 0), 0);
       let testId = test?.id;
 
+      console.log('Starting save process...', { isUpdate: !!test, totalQuestions: questions.length });
+
       if (test) {
+        console.log('Updating existing test:', test.id);
         const { error: updateError } = await (supabase.from('tests') as any)
           .update({
             title,
@@ -160,7 +162,10 @@ export default function CreateTestModal({ test, onClose, onSuccess }: CreateTest
           })
           .eq('id', test.id);
 
-        if (updateError) throw updateError;
+        if (updateError) {
+          console.error('Test update error:', updateError);
+          throw new Error(`Failed to update test details: ${updateError.message}`);
+        }
 
         // Get current questions in DB to see what to delete
         const { data: existingData } = await (supabase.from('questions') as any)
@@ -173,6 +178,7 @@ export default function CreateTestModal({ test, onClose, onSuccess }: CreateTest
           .filter(id => !currentQuestionIds.includes(id)) || [];
 
         if (idsToDelete.length > 0) {
+          console.log('Deleting removed questions...', idsToDelete);
           const { error: deleteError } = await (supabase.from('questions') as any)
             .delete()
             .in('id', idsToDelete);
@@ -183,6 +189,7 @@ export default function CreateTestModal({ test, onClose, onSuccess }: CreateTest
           }
         }
       } else {
+        console.log('Creating new test...');
         const { data: newTest, error: insertError } = await (supabase.from('tests') as any)
           .insert({
             title,
@@ -194,24 +201,69 @@ export default function CreateTestModal({ test, onClose, onSuccess }: CreateTest
           .select()
           .single();
 
-        if (insertError) throw insertError;
+        if (insertError) {
+          console.error('Test insert error:', insertError);
+          throw new Error(`Failed to create test: ${insertError.message}`);
+        }
         testId = (newTest as any).id;
+        console.log('New test created with ID:', testId);
       }
 
-      const questionsToUpsert = questions.map((q) => ({
-        ...q,
-        test_id: testId,
-      }));
+      if (!testId) {
+        throw new Error('Test ID generation failed.');
+      }
 
-      const { error: questionsError } = await (supabase.from('questions') as any)
-        .upsert(questionsToUpsert);
+      console.log('Preparing questions to upsert...', questions.length);
+      const questionsToUpsert = questions.map((q, idx) => {
+        // Generate a temporary ID if one doesn't exist to prevent PostgREST null padding issues
+        const questionId = (q.id && q.id.length > 20) ? q.id :
+          (typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2) + Date.now().toString(36));
 
-      if (questionsError) throw questionsError;
+        const payload: any = {
+          id: questionId,
+          test_id: testId,
+          question_number: idx + 1,
+          question_type: q.question_type,
+          question_text: q.question_text,
+          options: q.options || [],
+          correct_answers: q.correct_answers || [],
+          marks: Number(q.marks) || 1,
+          is_case_sensitive: !!q.is_case_sensitive,
+        };
 
+        return payload;
+      });
+
+      console.log('Upserting questions...', questionsToUpsert);
+      const { error: questionsError, data: upsertedData } = await (supabase.from('questions') as any)
+        .upsert(questionsToUpsert)
+        .select();
+
+      if (questionsError) {
+        console.error('Questions upsert error:', questionsError);
+        throw new Error(`Failed to save questions: ${questionsError.message}`);
+      }
+
+      console.log('Questions upsert successful. Verified count:', upsertedData?.length);
+
+      // Final check
+      if (!upsertedData || upsertedData.length === 0) {
+        console.warn('Upsert succeeded but no data returned. Verifying manually...');
+        const { count } = await supabase
+          .from('questions')
+          .select('*', { count: 'exact', head: true })
+          .eq('test_id', testId);
+
+        if (!count || count === 0) {
+          throw new Error('Database reported success but questions were not saved. Please try again.');
+        }
+      }
+
+      console.log('Save process completed successfully!');
       onSuccess();
-    } catch (error) {
-      console.error('Error saving test:', error);
-      alert('Failed to save test');
+    } catch (err: any) {
+      console.error('Detailed Error in handleSave:', err);
+      alert(err.message || 'Failed to save test due to an unknown error');
     } finally {
       setSaving(false);
     }
@@ -362,16 +414,6 @@ export default function CreateTestModal({ test, onClose, onSuccess }: CreateTest
                         </div>
                       </div>
 
-                      {/* Explanation Field */}
-                      <div>
-                        <label className="block text-xs md:text-sm font-bold text-gray-500 mb-2 uppercase tracking-wide">Correct Answer Explanation</label>
-                        <textarea
-                          value={question.explanation || ''}
-                          onChange={(e) => updateQuestion(index, 'explanation', e.target.value)}
-                          className="w-full px-4 py-3 md:px-6 md:py-4 bg-gray-50 border border-gray-100 rounded-xl md:rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all text-sm md:text-base min-h-[80px]"
-                          placeholder="Why is it the correct answer? (Optional)"
-                        />
-                      </div>
 
                       {/* Options and Correct Answers Logic */}
                       {(question.question_type === 'mcq_single' || question.question_type === 'mcq_multiple') && (

@@ -35,11 +35,22 @@ export default function ViewResultsModal({ testId, onClose }: ViewResultsModalPr
       const { data: submissionsData, error: submissionsError } = await supabase
         .from('submissions')
         .select('*')
-        .eq('test_id', testId)
-        .order('submitted_at', { ascending: false });
+        .eq('test_id', testId);
 
       if (submissionsError) throw submissionsError;
-      setSubmissions(submissionsData || []);
+
+      const sortedSubmissions = (submissionsData || []).sort((a: any, b: any) => {
+        // 1. Sort by percentage (descending)
+        if (b.percentage !== a.percentage) {
+          return (Number(b.percentage) || 0) - (Number(a.percentage) || 0);
+        }
+        // 2. Tie-breaker: Sort by submitted_at (ascending - earlier is better)
+        const timeA = a.submitted_at ? new Date(a.submitted_at).getTime() : Infinity;
+        const timeB = b.submitted_at ? new Date(b.submitted_at).getTime() : Infinity;
+        return timeA - timeB;
+      });
+
+      setSubmissions(sortedSubmissions);
     } catch (error) {
       console.error('Error loading data:', error);
     } finally {
@@ -154,6 +165,7 @@ export default function ViewResultsModal({ testId, onClose }: ViewResultsModalPr
                     <table className="w-full text-left whitespace-nowrap">
                       <thead>
                         <tr className="bg-white border-b border-gray-100">
+                          <th className="px-4 md:px-6 py-3 md:py-4 text-[10px] md:text-xs font-bold text-gray-500 uppercase tracking-widest text-center">Rank</th>
                           <th className="px-4 md:px-6 py-3 md:py-4 text-[10px] md:text-xs font-bold text-gray-500 uppercase tracking-widest">Student Info</th>
                           <th className="px-4 md:px-6 py-3 md:py-4 text-[10px] md:text-xs font-bold text-gray-500 uppercase tracking-widest">Date/Time</th>
                           <th className="px-4 md:px-6 py-3 md:py-4 text-[10px] md:text-xs font-bold text-gray-500 uppercase tracking-widest">Score</th>
@@ -163,8 +175,19 @@ export default function ViewResultsModal({ testId, onClose }: ViewResultsModalPr
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-gray-50">
-                        {submissions.map((s) => (
+                        {submissions.map((s, index) => (
                           <tr key={s.id} className="hover:bg-gray-50 transition-colors">
+                            <td className="px-4 md:px-6 py-4 text-center">
+                              <div className={`
+                                inline-flex items-center justify-center w-8 h-8 rounded-full font-bold text-sm
+                                ${index === 0 ? 'bg-yellow-100 text-yellow-700 border border-yellow-200' :
+                                  index === 1 ? 'bg-gray-100 text-gray-600 border border-gray-200' :
+                                    index === 2 ? 'bg-orange-100 text-orange-700 border border-orange-200' :
+                                      'text-gray-500'}
+                              `}>
+                                {index + 1}
+                              </div>
+                            </td>
                             <td className="px-4 md:px-6 py-4">
                               <div className="flex flex-col">
                                 <span className="text-sm md:text-base font-bold text-gray-900 flex items-center gap-2">

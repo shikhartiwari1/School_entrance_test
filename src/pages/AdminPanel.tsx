@@ -353,10 +353,7 @@ export default function AdminPanel({ onLogout }: AdminPanelProps) {
             setShowCreateModal(false);
             setEditingTest(null);
           }}
-          onSuccess={() => {
-            loadTests();
-            loadStats();
-          }}
+          onSuccess={handleTestCreated}
         />
       )}
 

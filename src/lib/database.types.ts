@@ -49,7 +49,6 @@ export type Database = {
           correct_answers: Json;
           marks: number;
           is_case_sensitive: boolean;
-          explanation: string;
           created_at: string;
         };
         Insert: {
@@ -62,7 +61,6 @@ export type Database = {
           correct_answers: Json;
           marks?: number;
           is_case_sensitive?: boolean;
-          explanation?: string;
           created_at?: string;
         };
         Update: {
@@ -75,7 +73,6 @@ export type Database = {
           correct_answers?: Json;
           marks?: number;
           is_case_sensitive?: boolean;
-          explanation?: string;
           created_at?: string;
         };
       };

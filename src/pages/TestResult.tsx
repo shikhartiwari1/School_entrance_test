@@ -304,16 +304,6 @@ export default function TestResult({ submissionId, onBackToHome }: TestResultPro
                               </div>
                             </div>
 
-                            {question?.explanation && (
-                              <div className="ml-11 mt-3 p-4 bg-emerald-50/40 border border-emerald-100 rounded-lg">
-                                <p className="text-emerald-700 text-sm italic font-medium flex items-center gap-2 mb-1">
-                                  <AlertCircle className="w-4 h-4 text-emerald-600" /> Explanation / Review:
-                                </p>
-                                <p className="text-gray-700 text-sm leading-relaxed">
-                                  {question.explanation}
-                                </p>
-                              </div>
-                            )}
                           </div>
                         );
                       })}
