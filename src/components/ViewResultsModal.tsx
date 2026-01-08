@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { X, Download, AlertCircle } from 'lucide-react';
+import { X, Download, AlertCircle, Trash2 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { exportToExcel } from '../lib/excelExport';
 import type { Database } from '../lib/database.types';
@@ -54,6 +54,29 @@ export default function ViewResultsModal({ testId, onClose }: ViewResultsModalPr
     } catch (error) {
       console.error('Error loading data:', error);
     } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDelete = async (submissionId: string, studentName: string) => {
+    if (!confirm(`Are you sure you want to delete the submission for ${studentName}?\nThis action cannot be undone.`)) {
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const { error } = await supabase
+        .from('submissions')
+        .delete()
+        .eq('id', submissionId);
+
+      if (error) throw error;
+
+      // Reload data to update list and rankings
+      await loadData();
+    } catch (error) {
+      console.error('Error deleting submission:', error);
+      alert('Failed to delete submission');
       setLoading(false);
     }
   };
@@ -172,6 +195,7 @@ export default function ViewResultsModal({ testId, onClose }: ViewResultsModalPr
                           <th className="px-4 md:px-6 py-3 md:py-4 text-[10px] md:text-xs font-bold text-gray-500 uppercase tracking-widest">Details</th>
                           <th className="px-4 md:px-6 py-3 md:py-4 text-[10px] md:text-xs font-bold text-gray-500 uppercase tracking-widest">Security</th>
                           <th className="px-4 md:px-6 py-3 md:py-4 text-[10px] md:text-xs font-bold text-gray-500 uppercase tracking-widest">Status</th>
+                          <th className="px-4 md:px-6 py-3 md:py-4 text-[10px] md:text-xs font-bold text-gray-500 uppercase tracking-widest text-right">Actions</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-gray-50">
@@ -234,6 +258,15 @@ export default function ViewResultsModal({ testId, onClose }: ViewResultsModalPr
                             </td>
                             <td className="px-4 md:px-6 py-4">
                               {getStatusBadge(s.status || '')}
+                            </td>
+                            <td className="px-4 md:px-6 py-4 text-right">
+                              <button
+                                onClick={() => handleDelete(s.id, s.student_name)}
+                                className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition"
+                                title="Delete Submission"
+                              >
+                                <Trash2 className="w-4 h-4 md:w-5 md:h-5" />
+                              </button>
                             </td>
                           </tr>
                         ))}
